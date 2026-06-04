@@ -1,0 +1,54 @@
+name: V-MAX Heavy Video Dubber
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install Dependencies and FFmpeg
+      run: |
+        sudo apt-get update && sudo apt-get install -y ffmpeg
+        pip install openai-whisper edge-tts moviepy
+
+    - name: Run AI Dubbing Script
+      run: |
+        python -c "
+        import whisper, asyncio, edge_tts, os
+        from moviepy.editor import VideoFileClip, AudioFileClip
+        
+        if os.path.exists('input.mp4'):
+            print('Processing Heavy Video...')
+            model = whisper.load_model('base')
+            result = model.transcribe('input.mp4', task='translate')
+            
+            async def generate_voice():
+                communicate = edge_tts.Communicate(result['text'], 'ar-SA-HamedNeural')
+                await communicate.save('temp.mp3')
+            
+            asyncio.run(generate_voice())
+            
+            video = VideoFileClip('input.mp4')
+            audio = AudioFileClip('temp.mp3')
+            final = video.set_audio(audio)
+            final.write_videofile('output_arabic.mp4', codec='libx264', audio_codec='aac')
+            print('Done!')
+        else:
+            print('No input.mp4 found in repository root.')
+        "
+
+    - name: Upload Dubbed Video
+      uses: actions/upload-artifact@v4
+      with:
+        name: dubbed-video
+        path: output_arabic.mp4
