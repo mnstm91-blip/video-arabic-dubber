@@ -1,0 +1,7 @@
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-WTF
+email-validator
+bcrypt==3.2.0
+gunicorn
