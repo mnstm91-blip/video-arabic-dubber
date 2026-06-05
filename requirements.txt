@@ -1,4 +1,0 @@
-openai-whisper
-edge-tts
-moviepy
-streamlit
